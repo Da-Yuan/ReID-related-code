@@ -1,30 +1,67 @@
 // Main.cpp : 定义控制台应用程序的入口点。
 //
-
 #include "stdafx.h"
-#include "Saliency.h"
+#include "Saliency.h"  
+
 #include <opencv2/core/core.hpp>
-#include <opencv2/highgui.hpp>
-#include <iostream>
+#include <opencv2/highgui/highgui.hpp>
 
-using namespace cv;
+#include <iostream>  
+
 using namespace std;
+using namespace cv;
 
-void main()
+int main(int argc, char** argv)
 {
-	// Assume we already have an unsigned integer buffer inputImg of
-	// inputWidth and inputHeight (in row-major order).
-	// Each unsigned integer has 32 bits and contains pixel data in ARGB
-	// format. I.e. From left to right, the first 8 bits contain alpha
-	// channel value and are not used in our case. The next 8 bits
-	// contain R channel value; the next 8 bits contain G channel value;
-	// the last 8 bits contain the B channel value.
-	//
-	// Now create a Saliency object and call the GetSaliencyMap function on it.
-
 	Saliency sal;
-	vector<double> salmap(0);
-	sal.GetSaliencyMap(inputImg, inputWidth, inputHeight, salmap);
 
-	// salmap is a floating point output (in row major order)
+	Mat src = imread("./xr.jpg");
+
+	if (src.empty()) return -1;
+
+	vector<unsigned int >imgInput;
+	vector<double> imgSal;
+
+	//Mat to vector
+	int nr = src.rows; // number of rows  
+	int nc = src.cols; // total number of elements per line  
+	if (src.isContinuous()) {
+		// then no padded pixels  
+		nc = nc*nr;
+		nr = 1;  // it is now a 1D array  
+	}
+
+	for (int j = 0; j<nr; j++) {
+		uchar* data = src.ptr<uchar>(j);
+		for (int i = 0; i<nc; i++) {
+			unsigned int t = 0;
+			t += *data++;
+			t <<= 8;
+			t += *data++;
+			t <<= 8;
+			t += *data++;
+			imgInput.push_back(t);
+			
+		}                
+	}
+
+	sal.GetSaliencyMap(imgInput, src.cols, src.rows, imgSal);
+
+	//vector to Mat
+	int index0 = 0;
+	Mat imgout(src.size(), CV_64FC1);
+	for (int h = 0; h < src.rows; h++) {
+		double* p = imgout.ptr<double>(h);
+		for (int w = 0; w < src.cols; w++) {
+			*p++ = imgSal[index0++];
+		}
+	}
+	normalize(imgout, imgout, 0, 1, NORM_MINMAX);
+	
+	imshow("原图像", src);
+	imshow("显著性图像", imgout);
+
+	waitKey(0);
+	
+	return  0;
 }

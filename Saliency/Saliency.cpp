@@ -5,6 +5,8 @@
 //	Copyright (c) 2009 Radhakrishna Achanta [EPFL] 
 //===========================================================================
 
+
+#include "stdafx.h"
 #include "Saliency.h"
 #include <cmath>
 
